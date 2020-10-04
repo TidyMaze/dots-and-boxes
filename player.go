@@ -21,7 +21,7 @@ func mkGrid(boardSize int) Grid {
 	for i := range a {
 		a[i] = make([][]Direction, boardSize)
 		for j := range a[i] {
-			a[i][j] = []Direction{Left, Up, Right, Down}
+			a[i][j] = []Direction{}
 		}
 	}
 	return a
@@ -99,6 +99,20 @@ func findAction(g Grid) (int, int, Direction) {
 	panic("No action found")
 }
 
+func showDir(d Direction) int32 {
+	switch d {
+	case Up:
+		return 'T'
+	case Down:
+		return 'B'
+	case Left:
+		return 'L'
+	case Right:
+		return 'R'
+	}
+	panic("Unhandled dir")
+}
+
 func main() {
 	// boardSize: The size of the board.
 	var boardSize int
@@ -126,6 +140,8 @@ func main() {
 			var box, sides string
 			fmt.Scan(&box, &sides)
 
+			fmt.Fprintln(os.Stderr, sides)
+
 			parsedSides := make([]Direction, 0)
 			for _, char := range sides {
 				switch char {
@@ -137,6 +153,8 @@ func main() {
 					parsedSides = append(parsedSides, Up)
 				case 'B':
 					parsedSides = append(parsedSides, Down)
+				default:
+					panic(fmt.Sprintf("Unknown %c", char))
 				}
 			}
 
@@ -145,11 +163,11 @@ func main() {
 			g[y][x] = parsedSides
 		}
 
-		x, y, dir := findAction(g)
-
 		fmt.Fprintln(os.Stderr, showGrid(g))
 
+		x, y, dir := findAction(g)
+
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
-		fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', dir))
+		fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', showDir(dir)))
 	}
 }
