@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 )
 
@@ -101,14 +102,6 @@ func findAction(g Grid) (int, int, Direction) {
 }
 
 func main() {
-	g := mkGrid(2)
-	println(showGrid(g))
-
-	playSide(1, 1, g, Down)
-	playSide(0, 1, g, Down)
-
-	println(showGrid(g))
-
 	// boardSize: The size of the board.
 	var boardSize int
 	fmt.Scan(&boardSize)
@@ -127,14 +120,34 @@ func main() {
 		var numBoxes int
 		fmt.Scan(&numBoxes)
 
-		//g := mkGrid(boardSize)
+		g := mkGrid(boardSize)
 
 		for i := 0; i < numBoxes; i++ {
 			// box: The ID of the playable box.
 			// sides: Playable sides of the box.
 			var box, sides string
 			fmt.Scan(&box, &sides)
+
+			parsedSides := make([]Direction, 0)
+			for _, char := range sides {
+				switch char {
+				case 'L':
+					parsedSides = append(parsedSides, Left)
+				case 'R':
+					parsedSides = append(parsedSides, Right)
+				case 'T':
+					parsedSides = append(parsedSides, Up)
+				case 'B':
+					parsedSides = append(parsedSides, Down)
+				}
+			}
+
+			x := box[0] - 'A'
+			y := box[1] - '1'
+			g[y][x] = parsedSides
 		}
+
+		fmt.Fprintln(os.Stderr, showGrid(g))
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
 		fmt.Println("A1 T MSG bla bla bla...") // <box> <side> [MSG Optional message]
