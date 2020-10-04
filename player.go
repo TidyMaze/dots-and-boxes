@@ -91,6 +91,22 @@ func putSide(x int, y int, g Grid, dir Direction) {
 func findAction(g Grid) (int, int, Direction) {
 	for i := range g {
 		for j := range g[i] {
+			if len(g[i][j]) == 1 {
+				return j, i, g[i][j][0]
+			}
+		}
+	}
+
+	for i := range g {
+		for j := range g[i] {
+			if len(g[i][j]) == 3 {
+				return j, i, g[i][j][0]
+			}
+		}
+	}
+
+	for i := range g {
+		for j := range g[i] {
 			if len(g[i][j]) > 0 {
 				return j, i, g[i][j][0]
 			}
