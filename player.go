@@ -88,31 +88,59 @@ func putSide(x int, y int, g Grid, dir Direction) {
 	g[y][x] = removeDirSlice(g[y][x], dir)
 }
 
-func findAction(g Grid) (int, int, Direction) {
+func scorePut(g Grid, x int, y int, dir Direction) int {
+	score := 0
+	switch len(g[y][x]) {
+	case 4:
+		score += 0
+	case 3:
+		score += 0
+	case 2:
+		score -= 90
+	case 1:
+		score += 100
+	}
+
+	offX, offY, _ := getOffCoordAndDir(x, y, dir)
+	if offX >= 0 && offX < len(g) && offY >= 0 && offY < len(g) {
+		switch len(g[offY][offX]) {
+		case 4:
+			score += 0
+		case 3:
+			score += 0
+		case 2:
+			score -= 90
+		case 1:
+			score += 100
+		}
+	}
+
+	return score
+}
+
+func findAction(g Grid) (int, int, Direction, int) {
+	bestX := -1
+	bestY := -1
+	bestDir := Up
+	bestScore := -1000
+
 	for i := range g {
 		for j := range g[i] {
-			if len(g[i][j]) == 1 {
-				return j, i, g[i][j][0]
+			for _, d := range g[i][j] {
+				if len(g[i][j]) > 0 {
+					s := scorePut(g, j, i, d)
+					if s > bestScore {
+						bestScore = s
+						bestX = j
+						bestY = i
+						bestDir = d
+					}
+				}
 			}
 		}
 	}
 
-	for i := range g {
-		for j := range g[i] {
-			if len(g[i][j]) == 3 {
-				return j, i, g[i][j][0]
-			}
-		}
-	}
-
-	for i := range g {
-		for j := range g[i] {
-			if len(g[i][j]) > 0 {
-				return j, i, g[i][j][0]
-			}
-		}
-	}
-	panic("No action found")
+	return bestX, bestY, bestDir, bestScore
 }
 
 func showDir(d Direction) int32 {
@@ -181,7 +209,8 @@ func main() {
 
 		fmt.Fprintln(os.Stderr, showGrid(g))
 
-		x, y, dir := findAction(g)
+		x, y, dir, score := findAction(g)
+		fmt.Fprintf(os.Stderr, "best score is %d", score)
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
 		fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', showDir(dir)))
