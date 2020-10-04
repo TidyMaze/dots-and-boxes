@@ -8,11 +8,11 @@ import (
 type Direction int
 type Grid [][][]Direction
 
-const(
-    Up Direction = iota
-    Down
-    Left
-    Right
+const (
+	Up Direction = iota
+	Down
+	Left
+	Right
 )
 
 func mkGrid(boardSize int) Grid {
@@ -28,7 +28,7 @@ func mkGrid(boardSize int) Grid {
 
 func showGrid(g Grid) string {
 	res := ""
-	for i := range g {
+	for i := len(g) - 1; i >= 0; i-- {
 		for j := range g[i] {
 			res += strconv.Itoa(len(g[i][j]))
 		}
@@ -46,6 +46,26 @@ func dirInSlice(a Direction, list []Direction) bool {
 	return false
 }
 
+func getOffCoordAndDir(x int, y int, dir Direction) (int, int, Direction) {
+	switch dir {
+	case Up:
+		return x, y + 1, Down
+	case Down:
+		return x, y - 1, Up
+	case Left:
+		return x - 1, y, Right
+	case Right:
+		return x + 1, y, Left
+	}
+	panic("Unhandled dir")
+}
+
+func playSide(x int, y int, g Grid, dir Direction) {
+	offx, offy, offdir := getOffCoordAndDir(x, y, dir)
+	putSide(x, y, g, dir)
+	putSide(offx, offy, g, offdir)
+}
+
 func putSide(x int, y int, g Grid, dir Direction) {
 	if dirInSlice(dir, g[y][x]) {
 		panic(fmt.Sprintf("cannot put side %d at %d %d already contained", dir, x, y))
@@ -54,16 +74,17 @@ func putSide(x int, y int, g Grid, dir Direction) {
 }
 
 func main() {
+	g := mkGrid(2)
+	println(showGrid(g))
+
+	playSide(1, 1, g, Down)
+	playSide(0, 1, g, Down)
+
+	println(showGrid(g))
+
 	// boardSize: The size of the board.
 	var boardSize int
 	fmt.Scan(&boardSize)
-
-	g := mkGrid(boardSize)
-	println(showGrid(g))
-
-	putSide(2,2,g,Up)
-
-	println(showGrid(g))
 
 	// playerId: The ID of the player. 'A'=first player, 'B'=second player.
 	var playerId string
