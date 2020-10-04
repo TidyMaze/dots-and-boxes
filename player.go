@@ -20,7 +20,7 @@ func mkGrid(boardSize int) Grid {
 	for i := range a {
 		a[i] = make([][]Direction, boardSize)
 		for j := range a[i] {
-			a[i][j] = []Direction{}
+			a[i][j] = []Direction{Left, Up, Right, Down}
 		}
 	}
 	return a
@@ -66,11 +66,38 @@ func playSide(x int, y int, g Grid, dir Direction) {
 	putSide(offx, offy, g, offdir)
 }
 
+func indexOf(list []Direction, d Direction) int {
+	for k, v := range list {
+		if d == v {
+			return k
+		}
+	}
+	return -1 //not found.
+}
+
+func removeDirSlice(list []Direction, d Direction) []Direction {
+	index := indexOf(list, d)
+	return append(list[:index], list[index+1:]...)
+}
+
 func putSide(x int, y int, g Grid, dir Direction) {
-	if dirInSlice(dir, g[y][x]) {
+	if !dirInSlice(dir, g[y][x]) {
 		panic(fmt.Sprintf("cannot put side %d at %d %d already contained", dir, x, y))
 	}
-	g[y][x] = append(g[y][x], dir)
+	g[y][x] = removeDirSlice(g[y][x], dir)
+}
+
+func findAction(g Grid) (int, int, Direction) {
+	for i := range g {
+		for j := range g[i] {
+			for _, d := range []Direction{Up, Down, Left, Right} {
+				if !dirInSlice(d, g[i][j]) {
+					return j, i, d
+				}
+			}
+		}
+	}
+	panic("No action found")
 }
 
 func main() {
@@ -100,6 +127,8 @@ func main() {
 		var numBoxes int
 		fmt.Scan(&numBoxes)
 
+		//g := mkGrid(boardSize)
+
 		for i := 0; i < numBoxes; i++ {
 			// box: The ID of the playable box.
 			// sides: Playable sides of the box.
@@ -108,6 +137,6 @@ func main() {
 		}
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
-		fmt.Println("A1 B MSG bla bla bla...") // <box> <side> [MSG Optional message]
+		fmt.Println("A1 T MSG bla bla bla...") // <box> <side> [MSG Optional message]
 	}
 }
