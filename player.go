@@ -140,6 +140,10 @@ func findAction(g Grid) (int, int, Direction, int) {
 		}
 	}
 
+	if bestScore == -1000 {
+		panic("No action found")
+	}
+
 	return bestX, bestY, bestDir, bestScore
 }
 
