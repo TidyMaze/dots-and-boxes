@@ -91,10 +91,8 @@ func putSide(x int, y int, g Grid, dir Direction) {
 func findAction(g Grid) (int, int, Direction) {
 	for i := range g {
 		for j := range g[i] {
-			for _, d := range []Direction{Up, Down, Left, Right} {
-				if !dirInSlice(d, g[i][j]) {
-					return j, i, d
-				}
+			if len(g[i][j]) > 0 {
+				return j, i, g[i][j][0]
 			}
 		}
 	}
@@ -147,9 +145,11 @@ func main() {
 			g[y][x] = parsedSides
 		}
 
+		x, y, dir := findAction(g)
+
 		fmt.Fprintln(os.Stderr, showGrid(g))
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
-		fmt.Println("A1 T MSG bla bla bla...") // <box> <side> [MSG Optional message]
+		fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', dir))
 	}
 }
