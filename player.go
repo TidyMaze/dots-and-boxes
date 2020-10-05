@@ -109,7 +109,12 @@ func scorePut(g Grid, x int, y int, dir Direction) int {
 		case 3:
 			score += 0
 		case 2:
-			score -= 90
+			if len(g[y][x]) == 1 {
+				score += 150
+			} else {
+				score -= 90
+			}
+
 		case 1:
 			score += 100
 		}
