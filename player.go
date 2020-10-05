@@ -188,8 +188,6 @@ func main() {
 			var box, sides string
 			fmt.Scan(&box, &sides)
 
-			fmt.Fprintln(os.Stderr, sides)
-
 			parsedSides := make([]Direction, 0)
 			for _, char := range sides {
 				switch char {
