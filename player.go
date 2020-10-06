@@ -259,6 +259,29 @@ func showDir(d Direction) int32 {
 	panic("Unhandled dir")
 }
 
+func bestColor(coloredGrid [][]int) (int, int) {
+	counts := map[int]int{}
+
+	for i := range coloredGrid {
+		for j := range coloredGrid[i] {
+			color := coloredGrid[j][i]
+			if color != -1 {
+				counts[color] += 1
+			}
+		}
+	}
+
+	minScore := 0
+	minColor := -1
+	for k, v := range counts {
+		if minColor == -1 || v < minScore {
+			minScore = v
+			minColor = k
+		}
+	}
+	return minColor, minScore
+}
+
 func main() {
 	// boardSize: The size of the board.
 	var boardSize int
@@ -312,6 +335,10 @@ func main() {
 		if hasReachedAMidState(g) {
 			coloredGrid, nbColors := computeCorridors(g)
 			fmt.Fprintf(os.Stderr, "colored from %d to %d is\n%s", 0, nbColors, showIntGrid(coloredGrid))
+
+			minColor, minScore := bestColor(coloredGrid)
+			fmt.Fprintf(os.Stderr, "best color is %d with score %d", minColor, minScore)
+
 			panic("I'm forced to play something bad")
 		}
 
