@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"strconv"
 )
@@ -168,28 +167,24 @@ func findActionInCorridor(g Grid, coloredGrid [][]int, minColor int) (int, int, 
 }
 
 func findAction(g Grid) (int, int, Direction, int) {
-	type Key struct {
-		x, y int
-		dir  Direction
-	}
-
-	allActionsScored := map[Key]int{}
+	bestX := -1
+	bestY := -1
+	bestDir := Up
+	bestScore := -1000
 
 	for i := range g {
 		for j := range g[i] {
 			for _, d := range g[i][j] {
 				if len(g[i][j]) > 0 {
-					allActionsScored[Key{j, i, d}] = scorePut(g, j, i, d)
+					s := scorePut(g, j, i, d)
+					if s > bestScore {
+						bestScore = s
+						bestX = j
+						bestY = i
+						bestDir = d
+					}
 				}
 			}
-		}
-	}
-
-	bestScore := -1000
-
-	for _, s := range allActionsScored {
-		if s > bestScore {
-			bestScore = s
 		}
 	}
 
@@ -197,17 +192,7 @@ func findAction(g Grid) (int, int, Direction, int) {
 		panic("No action found")
 	}
 
-	allBests := make([]Key, 0)
-
-	for key, s := range allActionsScored {
-		if s == bestScore {
-			allBests = append(allBests, key)
-		}
-	}
-
-	best := allBests[rand.Intn(len(allBests))]
-
-	return best.x, best.y, best.dir, bestScore
+	return bestX, bestY, bestDir, bestScore
 }
 
 func hasReachedAMidState(g Grid) bool {
