@@ -54,7 +54,11 @@ func showIntGrid(g [][]int) string {
 	res := ""
 	for i := len(g) - 1; i >= 0; i-- {
 		for j := range g[i] {
-			res += strconv.Itoa(g[i][j])
+			if g[i][j] == -1 {
+				res += "."
+			} else {
+				res += strconv.Itoa(g[i][j])
+			}
 		}
 		res += "\n"
 	}
@@ -148,6 +152,19 @@ func scorePut(g Grid, x int, y int, dir Direction) int {
 	}
 
 	return score
+}
+
+func findActionInCorridor(g Grid, coloredGrid [][]int, minColor int) (int, int, Direction) {
+	for i := range g {
+		for j := range g[i] {
+			for _, d := range g[i][j] {
+				if coloredGrid[i][j] == minColor {
+					return j, i, d
+				}
+			}
+		}
+	}
+	panic("No action found")
 }
 
 func findAction(g Grid) (int, int, Direction, int) {
@@ -337,15 +354,17 @@ func main() {
 			fmt.Fprintf(os.Stderr, "colored from %d to %d is\n%s", 0, nbColors, showIntGrid(coloredGrid))
 
 			minColor, minScore := bestColor(coloredGrid)
+
 			fmt.Fprintf(os.Stderr, "best color is %d with score %d", minColor, minScore)
 
-			panic("I'm forced to play something bad")
+			x, y, dir := findActionInCorridor(g, coloredGrid, minColor)
+			fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', showDir(dir)))
+		} else {
+			x, y, dir, score := findAction(g)
+			fmt.Fprintf(os.Stderr, "best score is %d", score)
+
+			// fmt.Fprintln(os.Stderr, "Debug messages...")
+			fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', showDir(dir)))
 		}
-
-		x, y, dir, score := findAction(g)
-		fmt.Fprintf(os.Stderr, "best score is %d", score)
-
-		// fmt.Fprintln(os.Stderr, "Debug messages...")
-		fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', showDir(dir)))
 	}
 }
