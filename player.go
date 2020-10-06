@@ -89,6 +89,10 @@ func putSide(x int, y int, g Grid, dir Direction) {
 	g[y][x] = removeDirSlice(g[y][x], dir)
 }
 
+func inBoard(boardSize int, x int, y int) bool {
+	return x >= 0 && x < boardSize && y >= 0 && y < boardSize
+}
+
 func scorePut(g Grid, x int, y int, dir Direction) int {
 	score := 0
 	switch len(g[y][x]) {
@@ -103,7 +107,7 @@ func scorePut(g Grid, x int, y int, dir Direction) int {
 	}
 
 	offX, offY, _ := getOffCoordAndDir(x, y, dir)
-	if offX >= 0 && offX < len(g) && offY >= 0 && offY < len(g) {
+	if inBoard(len(g), offX, offY) {
 		switch len(g[offY][offX]) {
 		case 4:
 			score += 0
@@ -165,6 +169,28 @@ func findAction(g Grid) (int, int, Direction, int) {
 	best := allBests[rand.Intn(len(allBests))]
 
 	return best.x, best.y, best.dir, bestScore
+}
+
+func hasReachedAMidState(g Grid) bool {
+	for i := range g {
+		for j := range g[i] {
+			if len(g[i][j]) == 0 {
+				continue
+			} else if len(g[i][j]) == 1 {
+				return false
+			} else if len(g[i][j]) == 2 {
+				continue
+			} else {
+				for _, d := range g[i][j] {
+					offX, offY, _ := getOffCoordAndDir(j, i, d)
+					if inBoard(len(g), offX, offY) && len(g[offY][offX]) > 2 {
+						return false
+					}
+				}
+			}
+		}
+	}
+	return true
 }
 
 func showDir(d Direction) int32 {
@@ -230,6 +256,10 @@ func main() {
 		}
 
 		fmt.Fprintln(os.Stderr, showGrid(g))
+
+		if hasReachedAMidState(g) {
+			panic("I'm forced to play something bad")
+		}
 
 		x, y, dir, score := findAction(g)
 		fmt.Fprintf(os.Stderr, "best score is %d", score)
