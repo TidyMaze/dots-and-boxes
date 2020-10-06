@@ -183,7 +183,7 @@ func hasReachedAMidState(g Grid) bool {
 			} else {
 				for _, d := range g[i][j] {
 					offX, offY, _ := getOffCoordAndDir(j, i, d)
-					if inBoard(len(g), offX, offY) && len(g[offY][offX]) > 2 {
+					if !inBoard(len(g), offX, offY) || len(g[offY][offX]) > 2 {
 						return false
 					}
 				}
