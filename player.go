@@ -241,7 +241,7 @@ func exploreCorridor(g Grid, coloredGrid [][]int, color int, x int, y int) {
 	case 1, 2:
 		for _, d := range g[y][x] {
 			offX, offY, _ := getOffCoordAndDir(x, y, d)
-			if inBoard(len(g), offX, offY) && coloredGrid[offY][offX] == -1 {
+			if inBoard(len(g), offX, offY) && coloredGrid[offY][offX] == -1 && len(g[offY][offX]) <= 2 {
 				exploreCorridor(g, coloredGrid, color, offX, offY)
 			}
 		}
