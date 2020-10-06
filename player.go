@@ -28,11 +28,33 @@ func mkGrid(boardSize int) Grid {
 	return a
 }
 
+func mkIntGrid(boardSize int, fill int) [][]int {
+	a := make([][]int, boardSize)
+	for i := range a {
+		a[i] = make([]int, boardSize)
+		for j := range a[i] {
+			a[i][j] = fill
+		}
+	}
+	return a
+}
+
 func showGrid(g Grid) string {
 	res := ""
 	for i := len(g) - 1; i >= 0; i-- {
 		for j := range g[i] {
 			res += strconv.Itoa(len(g[i][j]))
+		}
+		res += "\n"
+	}
+	return res
+}
+
+func showIntGrid(g [][]int) string {
+	res := ""
+	for i := len(g) - 1; i >= 0; i-- {
+		for j := range g[i] {
+			res += strconv.Itoa(g[i][j])
 		}
 		res += "\n"
 	}
@@ -193,6 +215,36 @@ func hasReachedAMidState(g Grid) bool {
 	return true
 }
 
+func exploreCorridor(g Grid, coloredGrid [][]int, color int, x int, y int) {
+	coloredGrid[y][x] = color
+	sidesPlayable := len(g[y][x])
+	switch sidesPlayable {
+	case 0, 3, 4:
+		return
+	case 1, 2:
+		for _, d := range g[y][x] {
+			offX, offY, _ := getOffCoordAndDir(x, y, d)
+			if inBoard(len(g), offX, offY) && coloredGrid[offY][offX] == -1 {
+				exploreCorridor(g, coloredGrid, color, offX, offY)
+			}
+		}
+	}
+}
+
+func computeCorridors(g Grid) ([][]int, int) {
+	res := mkIntGrid(len(g), -1)
+	currentColor := -1
+	for i := range g {
+		for j := range g[i] {
+			if res[i][j] == -1 && len(g[i][j]) > 0 {
+				currentColor++
+				exploreCorridor(g, res, currentColor, j, i)
+			}
+		}
+	}
+	return res, currentColor
+}
+
 func showDir(d Direction) int32 {
 	switch d {
 	case Up:
@@ -258,6 +310,8 @@ func main() {
 		fmt.Fprintln(os.Stderr, showGrid(g))
 
 		if hasReachedAMidState(g) {
+			coloredGrid, nbColors := computeCorridors(g)
+			fmt.Fprintf(os.Stderr, "colored from %d to %d is\n%s", 0, nbColors, showIntGrid(coloredGrid))
 			panic("I'm forced to play something bad")
 		}
 
