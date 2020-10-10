@@ -154,12 +154,19 @@ func scorePut(g Grid, x int, y int, dir Direction) int {
 	return score
 }
 
-func findActionInCorridor(g Grid, coloredGrid [][]int, minColor int) (int, int, Direction) {
+func findActionInCorridor(g Grid) (int, int, Direction, int) {
+	coloredGrid, nbColors := computeCorridors(g)
+	fmt.Fprintf(os.Stderr, "colored from %d to %d is\n%s", 0, nbColors, showIntGrid(coloredGrid))
+
+	minColor, minScore := bestColor(coloredGrid)
+
+	fmt.Fprintf(os.Stderr, "best color is %d with score %d", minColor, minScore)
+
 	for i := range g {
 		for j := range g[i] {
 			for _, d := range g[i][j] {
 				if coloredGrid[i][j] == minColor {
-					return j, i, d
+					return j, i, d, minScore
 				}
 			}
 		}
@@ -173,41 +180,46 @@ func findAction(g Grid) (int, int, Direction, int) {
 		dir  Direction
 	}
 
-	allActionsScored := map[Key]int{}
+	if hasReachedAMidState(g) {
+		return findActionInCorridor(g)
+	} else {
+		allActionsScored := map[Key]int{}
 
-	for i := range g {
-		for j := range g[i] {
-			for _, d := range g[i][j] {
-				if len(g[i][j]) > 0 {
-					allActionsScored[Key{j, i, d}] = scorePut(g, j, i, d)
+		for i := range g {
+			for j := range g[i] {
+				for _, d := range g[i][j] {
+					if len(g[i][j]) > 0 {
+						allActionsScored[Key{j, i, d}] = scorePut(g, j, i, d)
+					}
 				}
 			}
 		}
-	}
 
-	bestScore := -1000
+		bestScore := -1000
 
-	for _, s := range allActionsScored {
-		if s > bestScore {
-			bestScore = s
+		for _, s := range allActionsScored {
+			if s > bestScore {
+				bestScore = s
+			}
 		}
-	}
 
-	if bestScore == -1000 {
-		panic("No action found")
-	}
-
-	allBests := make([]Key, 0)
-
-	for key, s := range allActionsScored {
-		if s == bestScore {
-			allBests = append(allBests, key)
+		if bestScore == -1000 {
+			panic("No action found")
 		}
+
+		allBests := make([]Key, 0)
+
+		for key, s := range allActionsScored {
+			if s == bestScore {
+				allBests = append(allBests, key)
+			}
+		}
+
+		best := allBests[rand.Intn(len(allBests))]
+
+		return best.x, best.y, best.dir, bestScore
 	}
 
-	best := allBests[rand.Intn(len(allBests))]
-
-	return best.x, best.y, best.dir, bestScore
 }
 
 func hasReachedAMidState(g Grid) bool {
@@ -349,22 +361,10 @@ func main() {
 
 		fmt.Fprintln(os.Stderr, showGrid(g))
 
-		if hasReachedAMidState(g) {
-			coloredGrid, nbColors := computeCorridors(g)
-			fmt.Fprintf(os.Stderr, "colored from %d to %d is\n%s", 0, nbColors, showIntGrid(coloredGrid))
+		x, y, dir, score := findAction(g)
+		fmt.Fprintf(os.Stderr, "best score is %d", score)
 
-			minColor, minScore := bestColor(coloredGrid)
-
-			fmt.Fprintf(os.Stderr, "best color is %d with score %d", minColor, minScore)
-
-			x, y, dir := findActionInCorridor(g, coloredGrid, minColor)
-			fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', showDir(dir)))
-		} else {
-			x, y, dir, score := findAction(g)
-			fmt.Fprintf(os.Stderr, "best score is %d", score)
-
-			// fmt.Fprintln(os.Stderr, "Debug messages...")
-			fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', showDir(dir)))
-		}
+		// fmt.Fprintln(os.Stderr, "Debug messages...")
+		fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', showDir(dir)))
 	}
 }
