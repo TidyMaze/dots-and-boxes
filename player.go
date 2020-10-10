@@ -91,7 +91,9 @@ func getOffCoordAndDir(x int, y int, dir Direction) (int, int, Direction) {
 func playSide(x int, y int, g Grid, dir Direction) {
 	offx, offy, offdir := getOffCoordAndDir(x, y, dir)
 	putSide(x, y, g, dir)
-	putSide(offx, offy, g, offdir)
+	if inBoard(len(g), offx, offy) {
+		putSide(offx, offy, g, offdir)
+	}
 }
 
 func indexOf(list []Direction, d Direction) int {
@@ -154,24 +156,51 @@ func scorePut(g Grid, x int, y int, dir Direction) int {
 	return score
 }
 
+func copyGrid(g Grid) Grid {
+	duplicate := make([][][]Direction, len(g))
+	for i := range g {
+		duplicate[i] = make([][]Direction, len(g[i]))
+		for j := range g[i] {
+			duplicate[i][j] = make([]Direction, len(g[i][j]))
+			copy(duplicate[i][j], g[i][j])
+		}
+	}
+	return duplicate
+}
+
 func findActionInCorridor(g Grid) (int, int, Direction, int) {
-	coloredGrid, nbColors := computeCorridors(g)
-	fmt.Fprintf(os.Stderr, "colored from %d to %d is\n%s", 0, nbColors, showIntGrid(coloredGrid))
 
-	minColor, minScore := bestColor(coloredGrid)
-
-	fmt.Fprintf(os.Stderr, "best color is %d with score %d", minColor, minScore)
+	bestX := -1
+	bestY := -1
+	bestDir := Up
+	bestScore := -1
 
 	for i := range g {
 		for j := range g[i] {
 			for _, d := range g[i][j] {
-				if coloredGrid[i][j] == minColor {
-					return j, i, d, minScore
+				modifiedGrid := copyGrid(g)
+				playSide(j, i, modifiedGrid, d)
+
+				coloredGrid, nbColors := computeCorridors(modifiedGrid)
+				minColor, minScore := bestColor(coloredGrid)
+
+				if bestScore == -1 || minScore < bestScore {
+					fmt.Fprintf(os.Stderr, "colored from %d to %d is\n%s", 0, nbColors, showIntGrid(coloredGrid))
+					fmt.Fprintf(os.Stderr, "best color is %d with score %d", minColor, minScore)
+
+					bestScore = minScore
+					bestX = j
+					bestY = i
+					bestDir = d
 				}
 			}
 		}
 	}
-	panic("No action found")
+
+	if bestScore == -1 {
+		panic("No action found :/")
+	}
+	return bestX, bestY, bestDir, bestScore
 }
 
 func findAction(g Grid) (int, int, Direction, int) {
