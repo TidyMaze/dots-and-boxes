@@ -181,14 +181,18 @@ func findActionInCorridor(g Grid) (int, int, Direction, int) {
 				modifiedGrid := copyGrid(g)
 				playSide(j, i, modifiedGrid, d)
 
-				coloredGrid, nbColors := computeCorridors(modifiedGrid)
-				minColor, minScore := bestColor(coloredGrid)
+				offx, offy, _ := getOffCoordAndDir(j, i, d)
+				starters := [][]int{{j, i}}
+				if inBoard(len(g), offx, offy) {
+					starters = append(starters, []int{offx, offy})
+				}
 
-				if bestScore == -1 || minScore < bestScore {
-					fmt.Fprintf(os.Stderr, "colored from %d to %d is\n%s", 0, nbColors, showIntGrid(coloredGrid))
-					fmt.Fprintf(os.Stderr, "best color is %d with score %d", minColor, minScore)
+				coloredGrid, nbReachable := computeCorridors(modifiedGrid, starters)
 
-					bestScore = minScore
+				if bestScore == -1 || nbReachable < bestScore {
+					fmt.Fprintf(os.Stderr, "best is %d with\n%s", nbReachable, showIntGrid(coloredGrid))
+
+					bestScore = nbReachable
 					bestX = j
 					bestY = i
 					bestDir = d
@@ -289,18 +293,24 @@ func exploreCorridor(g Grid, coloredGrid [][]int, color int, x int, y int) {
 	}
 }
 
-func computeCorridors(g Grid) ([][]int, int) {
+func computeCorridors(g Grid, starters [][]int) ([][]int, int) {
 	res := mkIntGrid(len(g), -1)
-	currentColor := -1
+
+	for _, starter := range starters {
+		x := starter[0]
+		y := starter[1]
+		exploreCorridor(g, res, 0, x, y)
+	}
+
+	count := 0
 	for i := range g {
 		for j := range g[i] {
-			if res[i][j] == -1 && len(g[i][j]) > 0 {
-				currentColor++
-				exploreCorridor(g, res, currentColor, j, i)
+			if res[i][j] == 0 {
+				count++
 			}
 		}
 	}
-	return res, currentColor
+	return res, count
 }
 
 func showDir(d Direction) int32 {
