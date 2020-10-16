@@ -277,17 +277,17 @@ func hasReachedAMidState(g Grid) bool {
 	return true
 }
 
-func exploreCorridor(g Grid, coloredGrid [][]int, color int, x int, y int) {
-	coloredGrid[y][x] = color
-	sidesPlayable := len(g[y][x])
-	switch sidesPlayable {
-	case 0, 3, 4:
-		return
-	case 1, 2:
-		for _, d := range g[y][x] {
-			offX, offY, _ := getOffCoordAndDir(x, y, d)
-			if inBoard(len(g), offX, offY) && coloredGrid[offY][offX] == -1 && len(g[offY][offX]) <= 2 {
-				exploreCorridor(g, coloredGrid, color, offX, offY)
+func exploreCorridor(g Grid, coloredGrid [][]int, color int) {
+	foundOne := true
+	for foundOne {
+		foundOne = false
+		for i := range g {
+			for j := range g[i] {
+				if len(g[i][j]) == 1 {
+					foundOne = true
+					coloredGrid[i][j] = color
+					playSide(j, i, g, g[i][j][0])
+				}
 			}
 		}
 	}
@@ -296,11 +296,7 @@ func exploreCorridor(g Grid, coloredGrid [][]int, color int, x int, y int) {
 func computeCorridors(g Grid, starters [][]int) ([][]int, int) {
 	res := mkIntGrid(len(g), -1)
 
-	for _, starter := range starters {
-		x := starter[0]
-		y := starter[1]
-		exploreCorridor(g, res, 0, x, y)
-	}
+	exploreCorridor(g, res, 0)
 
 	count := 0
 	for i := range g {
