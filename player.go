@@ -181,13 +181,7 @@ func findActionInCorridor(g Grid) (int, int, Direction, int) {
 				modifiedGrid := copyGrid(g)
 				playSide(j, i, modifiedGrid, d)
 
-				offx, offy, _ := getOffCoordAndDir(j, i, d)
-				starters := [][]int{{j, i}}
-				if inBoard(len(g), offx, offy) {
-					starters = append(starters, []int{offx, offy})
-				}
-
-				coloredGrid, nbReachable := computeCorridors(modifiedGrid, starters)
+				coloredGrid, nbReachable := computeCorridors(modifiedGrid)
 
 				if bestScore == -1 || nbReachable < bestScore {
 					fmt.Fprintf(os.Stderr, "best is %d with\n%s", nbReachable, showIntGrid(coloredGrid))
@@ -293,7 +287,7 @@ func exploreCorridor(g Grid, coloredGrid [][]int, color int) {
 	}
 }
 
-func computeCorridors(g Grid, starters [][]int) ([][]int, int) {
+func computeCorridors(g Grid) ([][]int, int) {
 	res := mkIntGrid(len(g), -1)
 
 	exploreCorridor(g, res, 0)
