@@ -2,13 +2,19 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"os"
 	"strconv"
 )
 
-type Direction int
+type Direction uint8
 type Grid [][][]Direction
+
+type State struct {
+	grid                       Grid
+	playerScore, opponentScore uint8
+}
 
 const (
 	Up Direction = iota
@@ -338,6 +344,61 @@ func bestColor(coloredGrid [][]int) (int, int) {
 		}
 	}
 	return minColor, minScore
+}
+
+func heuristic(state State) int {
+	return int(state.playerScore) - int(state.opponentScore)
+}
+
+func getChildStates(state State) []State {
+	return []State{}
+}
+
+// Max returns the larger of x or y.
+func Max(x, y int) int {
+	if x < y {
+		return y
+	}
+	return x
+}
+
+// Min returns the smaller of x or y.
+func Min(x, y int) int {
+	if x > y {
+		return y
+	}
+	return x
+}
+
+func isTerminal(state State) bool {
+	for i := range state.grid {
+		for j := range state.grid[i] {
+			if len(state.grid[i][j]) > 0 {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func minimax(state State, depth uint8, maximizingPlayer bool) int {
+	if depth == 0 || isTerminal(state) {
+		return heuristic(state)
+	}
+
+	if maximizingPlayer {
+		value := math.MinInt32
+		for _, child := range getChildStates(state) {
+			value = Max(value, minimax(child, depth-1, false))
+		}
+		return value
+	} else {
+		value := math.MaxInt32
+		for _, child := range getChildStates(state) {
+			value = Min(value, minimax(child, depth-1, true))
+		}
+		return value
+	}
 }
 
 func main() {
