@@ -8,29 +8,29 @@ import (
 	"strconv"
 )
 
-type Direction uint8
-type Grid [][][]Direction
+type direction uint8
+type grid [][][]direction
 
-type State struct {
-	grid          Grid
+type state struct {
+	grid          grid
 	playerScore   uint8
 	opponentScore uint8
 	myTurn        bool
 }
 
 const (
-	Up Direction = iota
-	Down
-	Left
-	Right
+	up direction = iota
+	down
+	left
+	right
 )
 
-func mkGrid(boardSize int) Grid {
-	a := make([][][]Direction, boardSize)
+func mkGrid(boardSize int) grid {
+	a := make([][][]direction, boardSize)
 	for i := range a {
-		a[i] = make([][]Direction, boardSize)
+		a[i] = make([][]direction, boardSize)
 		for j := range a[i] {
-			a[i][j] = []Direction{}
+			a[i][j] = []direction{}
 		}
 	}
 	return a
@@ -47,7 +47,7 @@ func mkIntGrid(boardSize int, fill int) [][]int {
 	return a
 }
 
-func showGrid(g Grid) string {
+func showGrid(g grid) string {
 	res := ""
 	for i := len(g) - 1; i >= 0; i-- {
 		for j := range g[i] {
@@ -73,7 +73,7 @@ func showIntGrid(g [][]int) string {
 	return res
 }
 
-func dirInSlice(a Direction, list []Direction) bool {
+func dirInSlice(a direction, list []direction) bool {
 	for _, b := range list {
 		if b == a {
 			return true
@@ -82,21 +82,21 @@ func dirInSlice(a Direction, list []Direction) bool {
 	return false
 }
 
-func getOffCoordAndDir(x int, y int, dir Direction) (int, int, Direction) {
+func getOffCoordAndDir(x int, y int, dir direction) (int, int, direction) {
 	switch dir {
-	case Up:
-		return x, y + 1, Down
-	case Down:
-		return x, y - 1, Up
-	case Left:
-		return x - 1, y, Right
-	case Right:
-		return x + 1, y, Left
+	case up:
+		return x, y + 1, down
+	case down:
+		return x, y - 1, up
+	case left:
+		return x - 1, y, right
+	case right:
+		return x + 1, y, left
 	}
 	panic("Unhandled dir")
 }
 
-func playSide(x int, y int, s *State, dir Direction) {
+func playSide(x int, y int, s *state, dir direction) {
 	offx, offy, offdir := getOffCoordAndDir(x, y, dir)
 	putSide(x, y, s, dir)
 
@@ -105,7 +105,7 @@ func playSide(x int, y int, s *State, dir Direction) {
 	}
 }
 
-func indexOf(list []Direction, d Direction) int {
+func indexOf(list []direction, d direction) int {
 	for k, v := range list {
 		if d == v {
 			return k
@@ -114,12 +114,12 @@ func indexOf(list []Direction, d Direction) int {
 	return -1 //not found.
 }
 
-func removeDirSlice(list []Direction, d Direction) []Direction {
+func removeDirSlice(list []direction, d direction) []direction {
 	index := indexOf(list, d)
 	return append(list[:index], list[index+1:]...)
 }
 
-func putSide(x int, y int, s *State, dir Direction) {
+func putSide(x int, y int, s *state, dir direction) {
 	if !dirInSlice(dir, s.grid[y][x]) {
 		panic(fmt.Sprintf("cannot put side %d at %d %d already contained", dir, x, y))
 	}
@@ -138,7 +138,7 @@ func inBoard(boardSize int, x int, y int) bool {
 	return x >= 0 && x < boardSize && y >= 0 && y < boardSize
 }
 
-func scorePut(g Grid, x int, y int, dir Direction) int {
+func scorePut(g grid, x int, y int, dir direction) int {
 	score := 0
 	switch len(g[y][x]) {
 	case 4:
@@ -173,23 +173,23 @@ func scorePut(g Grid, x int, y int, dir Direction) int {
 	return score
 }
 
-func copyGrid(g Grid) Grid {
-	duplicate := make([][][]Direction, len(g))
+func copyGrid(g grid) grid {
+	duplicate := make([][][]direction, len(g))
 	for i := range g {
-		duplicate[i] = make([][]Direction, len(g[i]))
+		duplicate[i] = make([][]direction, len(g[i]))
 		for j := range g[i] {
-			duplicate[i][j] = make([]Direction, len(g[i][j]))
+			duplicate[i][j] = make([]direction, len(g[i][j]))
 			copy(duplicate[i][j], g[i][j])
 		}
 	}
 	return duplicate
 }
 
-func findActionInCorridor(s State) (int, int, Direction, int) {
+func findActionInCorridor(s state) (int, int, direction, int) {
 
 	bestX := -1
 	bestY := -1
-	bestDir := Up
+	bestDir := up
 	bestScore := -1
 
 	g := s.grid
@@ -221,55 +221,54 @@ func findActionInCorridor(s State) (int, int, Direction, int) {
 	return bestX, bestY, bestDir, bestScore
 }
 
-func findAction(s State) (int, int, Direction, int) {
+func findAction(s state) (int, int, direction, int) {
 	type Key struct {
 		x, y int
-		dir  Direction
+		dir  direction
 	}
 
 	if hasReachedAMidState(s.grid) {
 		return findActionInCorridor(s)
-	} else {
-		allActionsScored := map[Key]int{}
+	}
 
-		for i := range s.grid {
-			for j := range s.grid[i] {
-				for _, d := range s.grid[i][j] {
-					if len(s.grid[i][j]) > 0 {
-						allActionsScored[Key{j, i, d}] = scorePut(s.grid, j, i, d)
-					}
+	allActionsScored := map[Key]int{}
+
+	for i := range s.grid {
+		for j := range s.grid[i] {
+			for _, d := range s.grid[i][j] {
+				if len(s.grid[i][j]) > 0 {
+					allActionsScored[Key{j, i, d}] = scorePut(s.grid, j, i, d)
 				}
 			}
 		}
-
-		bestScore := -1000
-
-		for _, s := range allActionsScored {
-			if s > bestScore {
-				bestScore = s
-			}
-		}
-
-		if bestScore == -1000 {
-			panic("No action found")
-		}
-
-		allBests := make([]Key, 0)
-
-		for key, s := range allActionsScored {
-			if s == bestScore {
-				allBests = append(allBests, key)
-			}
-		}
-
-		best := allBests[rand.Intn(len(allBests))]
-
-		return best.x, best.y, best.dir, bestScore
 	}
 
+	bestScore := -1000
+
+	for _, s := range allActionsScored {
+		if s > bestScore {
+			bestScore = s
+		}
+	}
+
+	if bestScore == -1000 {
+		panic("No action found")
+	}
+
+	allBests := make([]Key, 0)
+
+	for key, s := range allActionsScored {
+		if s == bestScore {
+			allBests = append(allBests, key)
+		}
+	}
+
+	best := allBests[rand.Intn(len(allBests))]
+
+	return best.x, best.y, best.dir, bestScore
 }
 
-func hasReachedAMidState(g Grid) bool {
+func hasReachedAMidState(g grid) bool {
 	for i := range g {
 		for j := range g[i] {
 			if len(g[i][j]) == 0 {
@@ -291,7 +290,7 @@ func hasReachedAMidState(g Grid) bool {
 	return true
 }
 
-func exploreCorridor(s State, coloredGrid [][]int, color int) {
+func exploreCorridor(s state, coloredGrid [][]int, color int) {
 	foundOne := true
 	for foundOne {
 		foundOne = false
@@ -307,7 +306,7 @@ func exploreCorridor(s State, coloredGrid [][]int, color int) {
 	}
 }
 
-func computeCorridors(s State) ([][]int, int) {
+func computeCorridors(s state) ([][]int, int) {
 	res := mkIntGrid(len(s.grid), -1)
 
 	exploreCorridor(s, res, 0)
@@ -323,62 +322,39 @@ func computeCorridors(s State) ([][]int, int) {
 	return res, count
 }
 
-func showDir(d Direction) int32 {
+func showDir(d direction) int32 {
 	switch d {
-	case Up:
+	case up:
 		return 'T'
-	case Down:
+	case down:
 		return 'B'
-	case Left:
+	case left:
 		return 'L'
-	case Right:
+	case right:
 		return 'R'
 	}
 	panic("Unhandled dir")
 }
 
-func bestColor(coloredGrid [][]int) (int, int) {
-	counts := map[int]int{}
-
-	for i := range coloredGrid {
-		for j := range coloredGrid[i] {
-			color := coloredGrid[j][i]
-			if color != -1 {
-				counts[color] += 1
-			}
-		}
-	}
-
-	minScore := 0
-	minColor := -1
-	for k, v := range counts {
-		if minColor == -1 || v < minScore {
-			minScore = v
-			minColor = k
-		}
-	}
-	return minColor, minScore
-}
-
-func heuristic(state State) int {
+func heuristic(state state) int {
 	return int(state.playerScore) - int(state.opponentScore)
 }
 
-func copyState(state State) State {
-	return State{
-		grid:          copyGrid(state.grid),
-		playerScore:   state.playerScore,
-		opponentScore: state.opponentScore,
+func copyState(s state) state {
+	return state{
+		grid:          copyGrid(s.grid),
+		playerScore:   s.playerScore,
+		opponentScore: s.opponentScore,
 	}
 }
 
-func getChildStates(state State) []State {
-	result := make([]State, 0, 7*7*4)
+func getChildStates(s state) []state {
+	result := make([]state, 0, 7*7*4)
 
-	for i := range state.grid {
-		for j := range state.grid[i] {
-			for _, d := range state.grid[i][j] {
-				newState := copyState(state)
+	for i := range s.grid {
+		for j := range s.grid[i] {
+			for _, d := range s.grid[i][j] {
+				newState := copyState(s)
 				playSide(j, i, &newState, d)
 				result = append(result, newState)
 			}
@@ -404,7 +380,7 @@ func Min(x, y int) int {
 	return x
 }
 
-func isTerminal(state State) bool {
+func isTerminal(state state) bool {
 	for i := range state.grid {
 		for j := range state.grid[i] {
 			if len(state.grid[i][j]) > 0 {
@@ -415,7 +391,7 @@ func isTerminal(state State) bool {
 	return true
 }
 
-func minimax(state State, depth uint8, maximizingPlayer bool) int {
+func minimax(state state, depth uint8, maximizingPlayer bool) int {
 	if depth == 0 || isTerminal(state) {
 		return heuristic(state)
 	}
@@ -426,13 +402,13 @@ func minimax(state State, depth uint8, maximizingPlayer bool) int {
 			value = Max(value, minimax(child, depth-1, false))
 		}
 		return value
-	} else {
-		value := math.MaxInt32
-		for _, child := range getChildStates(state) {
-			value = Min(value, minimax(child, depth-1, true))
-		}
-		return value
 	}
+
+	value := math.MaxInt32
+	for _, child := range getChildStates(state) {
+		value = Min(value, minimax(child, depth-1, true))
+	}
+	return value
 }
 
 func main() {
@@ -440,9 +416,9 @@ func main() {
 	var boardSize int
 	fmt.Scan(&boardSize)
 
-	// playerId: The ID of the player. 'A'=first player, 'B'=second player.
-	var playerId string
-	fmt.Scan(&playerId)
+	// playerID: The ID of the player. 'A'=first player, 'B'=second player.
+	var playerID string
+	fmt.Scan(&playerID)
 
 	for {
 		// playerScore: The player's score.
@@ -462,17 +438,17 @@ func main() {
 			var box, sides string
 			fmt.Scan(&box, &sides)
 
-			parsedSides := make([]Direction, 0)
+			parsedSides := make([]direction, 0)
 			for _, char := range sides {
 				switch char {
 				case 'L':
-					parsedSides = append(parsedSides, Left)
+					parsedSides = append(parsedSides, left)
 				case 'R':
-					parsedSides = append(parsedSides, Right)
+					parsedSides = append(parsedSides, right)
 				case 'T':
-					parsedSides = append(parsedSides, Up)
+					parsedSides = append(parsedSides, up)
 				case 'B':
-					parsedSides = append(parsedSides, Down)
+					parsedSides = append(parsedSides, down)
 				default:
 					panic(fmt.Sprintf("Unknown %c", char))
 				}
@@ -485,7 +461,7 @@ func main() {
 
 		fmt.Fprintln(os.Stderr, showGrid(g))
 
-		s := State{
+		s := state{
 			grid:          g,
 			playerScore:   uint8(playerScore),
 			opponentScore: uint8(opponentScore),
@@ -501,6 +477,6 @@ func main() {
 		fmt.Fprintf(os.Stderr, "best score is %d, minimax score is %d with depth %d", score, resultScore, depth)
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
-		fmt.Println(fmt.Sprintf("%c%c %c", x+'A', y+'1', showDir(dir)))
+		fmt.Printf("%c%c %c\n", x+'A', y+'1', showDir(dir))
 	}
 }
